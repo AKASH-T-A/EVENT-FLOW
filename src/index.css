@@ -1,0 +1,88 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #F5F6F8;
+    color: #1F2933;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  code, pre {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Accessible focus styling */
+:focus-visible {
+  outline: 2px solid #2563EB;
+  outline-offset: 2px;
+}
+
+/* Custom scrollbars - quiet and minimal */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* Leaflet Container styling - clean light theme */
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 420px !important;
+  background: #E5E7EB !important;
+  font-family: inherit;
+  z-index: 1;
+}
+
+/* Standard clean light OpenStreetMap tiles - no dark filter */
+.leaflet-tile-pane {
+  filter: none !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: #FFFFFF !important;
+  color: #1F2933 !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  padding: 4px !important;
+}
+
+.leaflet-popup-tip {
+  background: #FFFFFF !important;
+  box-shadow: none !important;
+}
+
+.custom-venue-icon, .hotspot-badge, .metro-icon {
+  background: transparent;
+  border: none;
+}
+
+/* Subtle fade in for newly added log items only */
+@keyframes fadeInItem {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInItem {
+  animation: fadeInItem 0.2s ease-out forwards;
+}
