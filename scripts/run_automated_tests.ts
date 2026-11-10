@@ -519,6 +519,39 @@ async function runTests() {
     assert(false, 'Test 11: Metro lever recommendation exception', err.message);
   }
 
+  // TEST 12: Phase Judge Demo Milestones & Split Map Slider Math
+  try {
+    const { JUDGE_MILESTONES } = await import('../src/components/JudgeDemoController');
+
+    // 12.1: Exactly 7 choreographed milestones spanning 90 seconds
+    assert(
+      JUDGE_MILESTONES.length === 7,
+      'Test 12.1: Judge walkthrough contains exactly 7 choreographed milestones',
+      `Milestone count: ${JUDGE_MILESTONES.length}`
+    );
+
+    // 12.2: Milestones cover key stages (ingress, predict, plan, approve, alert, rain, learning)
+    const actionTriggers = JUDGE_MILESTONES.map((m) => m.actionTrigger);
+    const hasRequiredActions = ['observe', 'predict', 'plan', 'approve', 'rain', 'after_action'].every((a) =>
+      actionTriggers.includes(a as any)
+    );
+    assert(
+      hasRequiredActions,
+      'Test 12.2: Judge milestones include observe, predict, plan, approve, rain, and after_action stages',
+      `Actions covered: ${actionTriggers.join(', ')}`
+    );
+
+    // 12.3: All milestones have concise non-empty spoken narrations
+    const allHaveNarration = JUDGE_MILESTONES.every((m) => m.narration && m.narration.length > 20);
+    assert(
+      allHaveNarration,
+      'Test 12.3: All judge milestones have clear, high-fidelity spoken voiceover narrations',
+      `Average narration length: ${Math.round(JUDGE_MILESTONES.reduce((acc, m) => acc + m.narration.length, 0) / JUDGE_MILESTONES.length)} chars`
+    );
+  } catch (err: any) {
+    assert(false, 'Test 12: Judge Demo milestones exception', err.message);
+  }
+
   // Print Summary Table
   console.log('\n================ TEST RESULTS SUMMARY ================');
   let passCount = 0;

@@ -14,6 +14,7 @@ import { HowThisWorksFooter } from './components/HowThisWorksFooter';
 import { AddEventModal } from './components/AddEventModal';
 import { WhatIfSandbox } from './components/WhatIfSandbox';
 import { AfterActionReportModal } from './components/AfterActionReportModal';
+import { JudgeDemoController, JUDGE_MILESTONES } from './components/JudgeDemoController';
 import {
   EventData,
   PolicePlan,
@@ -26,7 +27,8 @@ import {
   AssumptionsConfig,
   LiveScenarioStatus,
   SupportedLanguage,
-  ScenarioState
+  ScenarioState,
+  JudgeDemoState
 } from './types';
 
 // Default initial events in Bengaluru
@@ -276,6 +278,29 @@ export default function App() {
     distanceWeight: 0.5,
     rainLowLyingWeight: 10
   });
+
+  // Judge Demo 90-Second Walkthrough State
+  const [judgeDemoState, setJudgeDemoState] = useState<JudgeDemoState>({
+    isActive: false,
+    isPaused: false,
+    currentMilestoneIndex: 0,
+    progressPct: 0,
+    speed: 1,
+    isVoiceMuted: false
+  });
+
+  // Browser Speech Synthesis for Judge Voiceover Narrator
+  const speakNarration = (text: string) => {
+    if (judgeDemoState.isVoiceMuted) return;
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // Cancel any existing utterances
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.05 * judgeDemoState.speed;
+      utterance.pitch = 1.0;
+      utterance.lang = 'en-IN';
+      window.speechSynthesis.speak(utterance);
+    }
+  };
 
   // Scenario Status
   const [liveScenario, setLiveScenario] = useState<LiveScenarioStatus>({
@@ -700,6 +725,8 @@ export default function App() {
           stageTitle: '2. Jammed chokepoint detected (Queens Road 119%). Scoring diversion routes...',
           simulatedTime: '17:30'
         }));
+        setJudgeDemoState((prev) => ({ ...prev, currentMilestoneIndex: 1 }));
+        speakNarration(JUDGE_MILESTONES[1].narration);
       }
 
       if (seconds === 32) {
@@ -710,6 +737,8 @@ export default function App() {
           stageTitle: '3. Awaiting police approval for recommended plan',
           simulatedTime: '17:45'
         }));
+        setJudgeDemoState((prev) => ({ ...prev, currentMilestoneIndex: 2 }));
+        speakNarration(JUDGE_MILESTONES[2].narration);
       }
 
       if (seconds === 42) {
@@ -721,6 +750,8 @@ export default function App() {
           stageTitle: '4. Plan authorized by police. Commuter alerts sent in 3 languages.',
           simulatedTime: '17:50'
         }));
+        setJudgeDemoState((prev) => ({ ...prev, currentMilestoneIndex: 3 }));
+        speakNarration(JUDGE_MILESTONES[3].narration);
       }
 
       if (seconds === 58) {
@@ -731,6 +762,8 @@ export default function App() {
           stageTitle: '5. Rain started earlier than forecast (14 mm/h). Recalculating plan...',
           simulatedTime: '18:00'
         }));
+        setJudgeDemoState((prev) => ({ ...prev, currentMilestoneIndex: 5 }));
+        speakNarration(JUDGE_MILESTONES[5].narration);
         await handleToggleRain(true);
       }
 
@@ -743,6 +776,8 @@ export default function App() {
           stageTitle: '6. Updated plan active. Commuters rerouted away from flooded underpass.',
           simulatedTime: '18:15'
         }));
+        setJudgeDemoState((prev) => ({ ...prev, currentMilestoneIndex: 6 }));
+        speakNarration(JUDGE_MILESTONES[6].narration);
       }
 
       if (seconds >= totalDurationSecs) {
@@ -759,8 +794,13 @@ export default function App() {
           simulatedTime: '18:30',
           progressPct: 100
         }));
+        setJudgeDemoState((prev) => ({ ...prev, isActive: false, progressPct: 100 }));
       } else {
         setLiveScenario((prev) => ({
+          ...prev,
+          progressPct: progress
+        }));
+        setJudgeDemoState((prev) => ({
           ...prev,
           progressPct: progress
         }));
@@ -832,6 +872,67 @@ export default function App() {
         onToggleTimelinePlay={() => setIsTimelinePlaying(!isTimelinePlaying)}
         hasAlerts={alerts.length > 0}
         hasCrowdFlow={Boolean(crowdFlow)}
+      />
+
+      {/* Presentation-Grade 90-Second Judge Demo Controller */}
+      <JudgeDemoController
+        demoState={judgeDemoState}
+        onTogglePlay={() => {
+          if (liveScenario.isActive) {
+            handleStartScenario(); // Toggles pause
+            setJudgeDemoState((prev) => ({ ...prev, isPaused: !prev.isPaused }));
+          } else {
+            handleStartScenario();
+            setJudgeDemoState((prev) => ({ ...prev, isActive: true, isPaused: false }));
+            speakNarration(JUDGE_MILESTONES[0].narration);
+          }
+        }}
+        onNextMilestone={() => {
+          const nextIdx = Math.min(JUDGE_MILESTONES.length - 1, judgeDemoState.currentMilestoneIndex + 1);
+          setJudgeDemoState((prev) => ({ ...prev, currentMilestoneIndex: nextIdx }));
+          speakNarration(JUDGE_MILESTONES[nextIdx].narration);
+          if (nextIdx === 2) handleRunAgent('Judge demo milestone 3: Plan diversions');
+          if (nextIdx === 3) handleApprovePlan();
+          if (nextIdx === 5) handleToggleRain(true);
+        }}
+        onPrevMilestone={() => {
+          const prevIdx = Math.max(0, judgeDemoState.currentMilestoneIndex - 1);
+          setJudgeDemoState((prev) => ({ ...prev, currentMilestoneIndex: prevIdx }));
+          speakNarration(JUDGE_MILESTONES[prevIdx].narration);
+        }}
+        onReset={() => {
+          handleReset();
+          setJudgeDemoState({
+            isActive: false,
+            isPaused: false,
+            currentMilestoneIndex: 0,
+            progressPct: 0,
+            speed: 1,
+            isVoiceMuted: false
+          });
+          if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+          }
+        }}
+        onChangeSpeed={(speed) => {
+          setJudgeDemoState((prev) => ({ ...prev, speed }));
+        }}
+        onToggleVoice={() => {
+          setJudgeDemoState((prev) => {
+            const nextMuted = !prev.isVoiceMuted;
+            if (nextMuted && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+              window.speechSynthesis.cancel();
+            }
+            return { ...prev, isVoiceMuted: nextMuted };
+          });
+        }}
+        onSelectMilestone={(index) => {
+          setJudgeDemoState((prev) => ({ ...prev, currentMilestoneIndex: index }));
+          speakNarration(JUDGE_MILESTONES[index].narration);
+          if (index === 2) handleRunAgent('Judge demo milestone 3: Plan diversions');
+          if (index === 3) handleApprovePlan();
+          if (index === 5) handleToggleRain(true);
+        }}
       />
 
       {/* Main Guided Content Area */}

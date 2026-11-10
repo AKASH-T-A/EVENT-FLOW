@@ -326,3 +326,22 @@ export interface SimulationState {
   liveScenario: LiveScenarioStatus;
   selectedLanguage: SupportedLanguage;
 }
+
+export interface JudgeMilestone {
+  id: number;
+  timeSec: number;
+  title: string;
+  subtitle: string;
+  narration: string;
+  highlightCardId?: 'map' | 'logs' | 'plan' | 'alerts' | 'sandbox' | 'learning';
+  actionTrigger?: 'observe' | 'predict' | 'plan' | 'approve' | 'rain' | 'replan' | 'after_action';
+}
+
+export interface JudgeDemoState {
+  isActive: boolean;
+  isPaused: boolean;
+  currentMilestoneIndex: number;
+  progressPct: number;
+  speed: 1 | 1.5 | 2;
+  isVoiceMuted: boolean;
+}

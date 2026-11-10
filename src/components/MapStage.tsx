@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { EventData, CrowdFlowPrediction, PolicePlan } from '../types';
 import { GoogleMapsView } from './GoogleMapsView';
 import { LeafletMap } from './LeafletMap';
+import { SplitMapComparison } from './SplitMapComparison';
 
 interface MapStageProps {
   event: EventData;
@@ -18,7 +19,7 @@ interface MapStageProps {
   resetCount?: number;
 }
 
-export type ViewEngine = 'leaflet' | 'google_maps';
+export type ViewEngine = 'leaflet' | 'google_maps' | 'split_comparison';
 
 export const MapStage: React.FC<MapStageProps> = ({
   event,
@@ -64,6 +65,16 @@ export const MapStage: React.FC<MapStageProps> = ({
             Standard map
           </button>
           <button
+            onClick={() => setEngine('split_comparison')}
+            className={`px-2.5 py-1 rounded text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[#2563EB] ${
+              engine === 'split_comparison'
+                ? 'bg-white text-[#2563EB] shadow-xs font-semibold'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Before / After Slider
+          </button>
+          <button
             onClick={() => setEngine('google_maps')}
             className={`px-2.5 py-1 rounded text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[#2563EB] ${
               engine === 'google_maps'
@@ -80,6 +91,17 @@ export const MapStage: React.FC<MapStageProps> = ({
       <div className="relative flex-1 w-full min-h-[460px] h-[480px]">
         {engine === 'leaflet' && (
           <LeafletMap
+            event={event}
+            crowdFlow={crowdFlow}
+            activePlan={activePlan}
+            isRaining={isRaining}
+            rainRate={rainRate}
+            timeScrubHour={timeScrubHour}
+          />
+        )}
+
+        {engine === 'split_comparison' && (
+          <SplitMapComparison
             event={event}
             crowdFlow={crowdFlow}
             activePlan={activePlan}
